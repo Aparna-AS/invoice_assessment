@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .invoice-container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button.reset {
+            background-color: #dc3545;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #000;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        .signature {
+            text-align: right;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="invoice-container" id="invoice-container">
+        <h1>Invoice Generator</h1>
+
+        <div class="section">
+            <h2>Seller Details</h2>
+            <label for="sellerName">Name</label>
+            <input type="text" id="sellerName">
+            <label for="sellerAddress">Address</label>
+            <textarea id="sellerAddress"></textarea>
+            <label for="sellerGst">GST No.</label>
+            <input type="text" id="sellerGst">
+        </div>
+
+        <div class="section">
+            <h2>Billing Details</h2>
+            <label for="billingName">Name</label>
+            <input type="text" id="billingName">
+            <label for="billingAddress">Address</label>
+            <textarea id="billingAddress"></textarea>
+            <label for="billingGst">GST No.</label>
+            <input type="text" id="billingGst">
+        </div>
+
+        <div class="section">
+            <h2>Item Details</h2>
+            <div id="item-container">
+                <!-- Item rows will be added here -->
+                <div class="item-row">
+                    <label for="itemDescription">Item Description</label>
+                    <input type="text" name="itemDescription[]">
+                    <label for="unitPrice">Unit Price</label>
+                    <input type="number" name="unitPrice[]">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" name="quantity[]">
+                    <label for="taxRate">Tax Rate (%)</label>
+                    <input type="number" name="taxRate[]" value="18">
+                </div>
+            </div>
+            <button type="button" onclick="addItem()">Add Another Item</button>
+        </div>
+
+        <button onclick="generateInvoice()">Generate Invoice</button>
+        <button class="reset" onclick="resetForm()">Reset</button>
+    </div>
+
+    <script>
+        function addItem() {
+            const itemContainer = document.getElementById('item-container');
+
+            // Create a new item row
+            const itemRow = document.createElement('div');
+            itemRow.classList.add('item-row');
+            itemRow.innerHTML = `
+                <label for="itemDescription">Item Description</label>
+                <input type="text" name="itemDescription[]">
+                <label for="unitPrice">Unit Price</label>
+                <input type="number" name="unitPrice[]">
+                <label for="quantity">Quantity</label>
+                <input type="number" name="quantity[]">
+                <label for="taxRate">Tax Rate (%)</label>
+                <input type="number" name="taxRate[]" value="18">
+            `;
+
+            itemContainer.appendChild(itemRow);
+        }
+
+        function generateInvoice() {
+            const sellerName = document.getElementById('sellerName').value;
+            const sellerAddress = document.getElementById('sellerAddress').value;
+            const sellerGst = document.getElementById('sellerGst').value;
+            const billingName = document.getElementById('billingName').value;
+            const billingAddress = document.getElementById('billingAddress').value;
+            const billingGst = document.getElementById('billingGst').value;
+
+            // Get all items
+            const itemDescriptions = document.querySelectorAll('[name="itemDescription[]"]');
+            const unitPrices = document.querySelectorAll('[name="unitPrice[]"]');
+            const quantities = document.querySelectorAll('[name="quantity[]"]');
+            const taxRates = document.querySelectorAll('[name="taxRate[]"]');
+
+            let netAmount = 0;
+            let taxAmount = 0;
+
+            // Loop through all items
+            const items = [];
+            for (let i = 0; i < itemDescriptions.length; i++) {
+                const itemDescription = itemDescriptions[i].value;
+                const unitPrice = parseFloat(unitPrices[i].value);
+                const quantity = parseInt(quantities[i].value);
+                const taxRate = parseFloat(taxRates[i].value);
+
+                const itemNetAmount = unitPrice * quantity;
+                const itemTaxAmount = (itemNetAmount * taxRate) / 100;
+                const itemTotalAmount = itemNetAmount + itemTaxAmount;
+
+                // Add to overall amounts
+                netAmount += itemNetAmount;
+                taxAmount += itemTaxAmount;
+
+                items.push({
+                    itemDescription,
+                    unitPrice: unitPrice.toFixed(2),
+                    quantity,
+                    taxRate,
+                    itemNetAmount: itemNetAmount.toFixed(2),
+                    itemTaxAmount: itemTaxAmount.toFixed(2),
+                    itemTotalAmount: itemTotalAmount.toFixed(2),
+                });
+            }
+
+            const totalAmount = netAmount + taxAmount;
+
+            // Construct query parameters
+            const params = new URLSearchParams({
+                sellerName,
+                sellerAddress,
+                sellerGst,
+                billingName,
+                billingAddress,
+                billingGst,
+                netAmount: netAmount.toFixed(2),
+                taxAmount: taxAmount.toFixed(2),
+                totalAmount: totalAmount.toFixed(2),
+                items: JSON.stringify(items),
+            });
+
+            // Open the invoice page with query parameters
+            window.location.href = 'invoice.html?' + params.toString();
+        }
+
+        function resetForm() {
+            document.getElementById('sellerName').value = '';
+            document.getElementById('sellerAddress').value = '';
+            document.getElementById('sellerGst').value = '';
+            document.getElementById('billingName').value = '';
+            document.getElementById('billingAddress').value = '';
+            document.getElementById('billingGst').value = '';
+            document.querySelectorAll('[name="itemDescription[]"]').forEach(input => input.value = '');
+            document.querySelectorAll('[name="unitPrice[]"]').forEach(input => input.value = '');
+            document.querySelectorAll('[name="quantity[]"]').forEach(input => input.value = '');
+            document.querySelectorAll('[name="taxRate[]"]').forEach(input => input.value = '18');
+        }
+    </script>
+</body>
+
+</html>

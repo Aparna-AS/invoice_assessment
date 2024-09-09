@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .invoice-container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header img {
+            height: 50px;
+        }
+
+        .header .title {
+            text-align: right;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 16px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        p {
+            margin: 2px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #000;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer p {
+            margin: 0;
+        }
+
+        .signature {
+            text-align: right;
+            margin-top: 20px;
+        }
+
+        .signature-box {
+            width: 200px;
+            height: 50px;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="invoice-container" id="invoice-container"></div>
+
+    <script>
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                sellerName: params.get('sellerName'),
+                sellerAddress: params.get('sellerAddress'),
+                sellerGst: params.get('sellerGst'),
+                billingName: params.get('billingName'),
+                billingAddress: params.get('billingAddress'),
+                shippingName: params.get('shippingName'),
+                shippingAddress: params.get('shippingAddress'),
+                billingGst: params.get('billingGst'),
+                items: JSON.parse(params.get('items'))
+            };
+        }
+
+        function numberToWords(num) {
+            const words = [
+                'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'
+            ];
+            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+            const scale = ['Thousand', 'Million', 'Billion'];
+
+            if (num === 0) return 'Zero';
+
+            let wordsArray = [];
+            if (num >= 1000) {
+                const thousand = Math.floor(num / 1000);
+                wordsArray.push(numberToWords(thousand) + ' Thousand');
+                num %= 1000;
+            }
+
+            if (num >= 100) {
+                const hundred = Math.floor(num / 100);
+                wordsArray.push(words[hundred] + ' Hundred');
+                num %= 100;
+            }
+
+            if (num >= 20) {
+                const ten = Math.floor(num / 10);
+                wordsArray.push(tens[ten]);
+                num %= 10;
+            }
+
+            if (num > 0) {
+                wordsArray.push(words[num]);
+            }
+
+            return wordsArray.join(' ');
+        }
+
+        function generateRandomNumber() {
+            return Math.floor(Math.random() * 1000000000);
+        }
+
+        function getCurrentTimestamp() {
+            const now = new Date();
+            return now.toISOString().split('T')[0];
+        }
+
+        function renderInvoice() {
+            const params = getQueryParams();
+            const invoiceContainer = document.getElementById('invoice-container');
+            const invoiceNo = generateRandomNumber();
+            const orderNo = generateRandomNumber();
+            const invoiceDate = getCurrentTimestamp();
+            const orderDate = getCurrentTimestamp();
+
+            let totalAmount = 0;
+            let itemRows = '';
+            params.items.forEach((item, index) => {
+                totalAmount += parseFloat(item.totalAmount);
+                itemRows += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${item.itemDescription}</td>
+                        <td>₹${item.unitPrice}</td>
+                        <td>${item.quantity}</td>
+                        <td>₹${item.netAmount}</td>
+                        <td>₹${item.taxAmount}</td>
+                        <td>₹${item.totalAmount}</td>
+                    </tr>
+                `;
+            });
+
+            invoiceContainer.innerHTML = `
+                <div class="header">
+                    <img src="https://th.bing.com/th/id/OIP.xIn00af_rw54z7zhhXuOhwHaHa?w=205&h=205&c=7&r=0&o=5&dpr=1.5&pid=1.7" alt="Amazon Logo">
+                    <div class="title">
+                        <h1>Tax Invoice</h1>
+                        <p><strong>Invoice No:</strong> ${invoiceNo}</p>
+                        <p><strong>Order No:</strong> ${orderNo}</p>
+                        <p><strong>Invoice Date:</strong> ${invoiceDate}</p>
+                        <p><strong>Order Date:</strong> ${orderDate}</p>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2>Seller Details</h2>
+                    <p><strong>${params.sellerName}</strong></p>
+                    <p>${params.sellerAddress}</p>
+                    <p>GST No: ${params.sellerGst}</p>
+                </div>
+
+                <div class="section">
+                    <h2>Billing Details</h2>
+                    <p><strong>${params.billingName}</strong></p>
+                    <p>${params.billingAddress}</p>
+                    <p>GST No: ${params.billingGst}</p>
+                </div>
+
+                <div class="section">
+                    <h2>Shipping Details</h2>
+                                        <p><strong>${params.billingName}</strong></p>
+                    <p>${params.billingAddress}</p>
+                    <p>GST No: ${params.billingGst}</p>
+                                    </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Item Description</th>
+                            <th>Unit Price</th>
+                            <th>Quantity</th>
+                            <th>Net Amount</th>
+                            <th>Tax Amount</th>
+                            <th>Total Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemRows}
+                    </tbody>
+                </table>
+
+                <div class="footer">
+                    <p><strong>Total Amount (in words):</strong> ${numberToWords(totalAmount)} Only</p>
+                    <div class="signature">
+                        <p>Authorized Signature</p>
+                        <div class="signature-box"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        renderInvoice();
+    </script>
+</body>
+
+</html>
