@@ -8,14 +8,19 @@
     <style>
         body {
             font-family: Arial, sans-serif;
+            margin: 20px;
         }
 
-        .invoice-container {
-            width: 80%;
+        h1 {
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
             margin: 0 auto;
             padding: 20px;
             border: 1px solid #ccc;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
         }
 
         .header {
@@ -24,224 +29,249 @@
             align-items: center;
         }
 
-        .header img {
-            height: 50px;
+        .logo {
+            width: 150px;
         }
 
-        .header .title {
+        .details {
+            margin-top: 10px;
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .invoice-header .left {
+            text-align: left;
+        }
+
+        .invoice-header .right {
             text-align: right;
-        }
-
-        .section {
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            font-size: 16px;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        p {
-            margin: 2px 0;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-top: 20px;
         }
 
         table,
         th,
         td {
-            border: 1px solid #000;
+            border: 1px solid #ddd;
         }
 
         th,
         td {
-            padding: 8px;
+            padding: 10px;
             text-align: left;
         }
 
-        .text-right {
-            text-align: right;
-        }
-
-        .footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .footer p {
-            margin: 0;
-        }
-
-        .signature {
-            text-align: right;
+        .totals {
             margin-top: 20px;
         }
 
-        .signature-box {
-            width: 200px;
-            height: 50px;
+        .totals p {
+            font-size: 18px;
+            margin: 5px 0;
+        }
+
+        .totals .total {
+            font-weight: bold;
+        }
+
+        .signature {
+            margin-top: 50px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .signature input {
             border: 1px solid #ccc;
+            padding: 5px;
             background-color: #f0f0f0;
-            margin-top: 10px;
+            color: #333;
+            width: 200px;
         }
     </style>
 </head>
 
 <body>
-    <div class="invoice-container" id="invoice-container"></div>
+    <div class="container">
+        <div class="header">
+            <img src="logo.png" alt="Company Logo" class="logo">
+            <div>
+                
+            </div>
+            <div class="invoice-details">
+                <p><strong> Tax invoice/Bill of supply/cash memo</strong></p>
+                <h2>Invoice</h2>
+                <p><strong>Invoice No:</strong> <span id="invoiceNumber"></span></p>
+                <p><strong>Order No:</strong> <span id="orderNumber"></span></p>
+            </div>
+        </div>
+
+        <div class="invoice-header">
+            <div class="left">
+                <h3>Seller Details</h3>
+                <p><strong>Name:</strong> <span id="sellerNameDetail"></span></p>
+                <p><strong>Address:</strong> <span id="sellerAddressDetail"></span></p>
+                <p><strong>GST No:</strong> <span id="sellerGstDetail"></span></p>
+
+                <h3>Billing Details</h3>
+                <p><strong>Name:</strong> <span id="billingNameDetail"></span></p>
+                <p><strong>Address:</strong> <span id="billingAddressDetail"></span></p>
+                <p><strong>GST No:</strong> <span id="billingGstDetail"></span></p>
+
+                <h3>Shipping Details</h3>
+                <p><strong>Name:</strong> <span id="shippingNameDetail"></span></p>
+                <p><strong>Address:</strong> <span id="shippingAddressDetail"></span></p>
+            </div>
+            <div class="right">
+                <p><strong>Invoice Date:</strong> <span id="invoiceDate"></span></p>
+                <p><strong>Order Date:</strong> <span id="orderDate"></span></p>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Item Description</th>
+                    <th>Unit Price</th>
+                    <th>Quantity</th>
+                    <th>Net Amount</th>
+                    <th>Tax Amount</th>
+                    <th>Total Amount</th>
+                </tr>
+            </thead>
+            <tbody id="itemTableBody">
+                <!-- Items will be dynamically added here -->
+            </tbody>
+        </table>
+
+        <div class="totals">
+            <p>Net Amount: ₹<span id="netAmount">0</span></p>
+            <p>CGST: ₹<span id="cgst">0</span></p>
+            <p>SGST: ₹<span id="sgst">0</span></p>
+            <p>IGST: ₹<span id="igst">0</span></p>
+            <p class="total">Total Tax Amount: ₹<span id="totalTaxAmount">0</span></p>
+            <p class="total">Total Amount Payable: ₹<span id="totalAmount">0</span></p>
+            <p><strong>Total Amount (in words):</strong> <span id="amountInWords"></span></p>
+        </div>
+
+        <div class="signature">
+            <p>Signature: <input type="text" placeholder="Enter signature" /></p>
+        </div>
+        
+    </div>
+    <button>Download</button>
 
     <script>
-        function getQueryParams() {
+        window.onload = function () {
+            // Parse the URL parameters
             const params = new URLSearchParams(window.location.search);
-            return {
-                sellerName: params.get('sellerName'),
-                sellerAddress: params.get('sellerAddress'),
-                sellerGst: params.get('sellerGst'),
-                billingName: params.get('billingName'),
-                billingAddress: params.get('billingAddress'),
-                shippingName: params.get('shippingName'),
-                shippingAddress: params.get('shippingAddress'),
-                billingGst: params.get('billingGst'),
-                items: JSON.parse(params.get('items'))
-            };
-        }
 
-        function numberToWords(num) {
-            const words = [
-                'Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'
-            ];
-            const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-            const scale = ['Thousand', 'Million', 'Billion'];
+            // Generate random invoice and order numbers
+            const invoiceNumber = Math.floor(100000 + Math.random() * 900000);
+            const orderNumber = Math.floor(100000 + Math.random() * 900000);
 
-            if (num === 0) return 'Zero';
+            // Set invoice and order numbers
+            document.getElementById('invoiceNumber').textContent = invoiceNumber;
+            document.getElementById('orderNumber').textContent = orderNumber;
 
-            let wordsArray = [];
-            if (num >= 1000) {
-                const thousand = Math.floor(num / 1000);
-                wordsArray.push(numberToWords(thousand) + ' Thousand');
-                num %= 1000;
-            }
+            // Set live timestamps for invoice and order date
+            const currentDate = new Date().toLocaleString();
+            document.getElementById('invoiceDate').textContent = currentDate;
+            document.getElementById('orderDate').textContent = currentDate;
 
-            if (num >= 100) {
-                const hundred = Math.floor(num / 100);
-                wordsArray.push(words[hundred] + ' Hundred');
-                num %= 100;
-            }
+            // Fetch values from the parameters
+            const sellerName = params.get('sellerName');
+            const sellerAddress = params.get('sellerAddress');
+            const sellerGst = params.get('sellerGst');
+            const billingName = params.get('billingName');
+            const billingAddress = params.get('billingAddress');
+            const billingGst = params.get('billingGst');
+            const shippingName = billingName; // Assuming shipping details are similar to billing
+            const shippingAddress = billingAddress;
+            const netAmount = params.get('netAmount');
+            const totalTaxAmount = params.get('totalTaxAmount');
+            const totalAmount = params.get('totalAmount');
+            const cgst = params.get('cgst');
+            const sgst = params.get('sgst');
+            const igst = params.get('igst');
+            const items = JSON.parse(params.get('items'));
 
-            if (num >= 20) {
-                const ten = Math.floor(num / 10);
-                wordsArray.push(tens[ten]);
-                num %= 10;
-            }
+            // Fill the seller, billing, and shipping details
+            document.getElementById('sellerNameDetail').textContent = sellerName;
+            document.getElementById('sellerAddressDetail').textContent = sellerAddress;
+            document.getElementById('sellerGstDetail').textContent = sellerGst;
+            document.getElementById('billingNameDetail').textContent = billingName;
+            document.getElementById('billingAddressDetail').textContent = billingAddress;
+            document.getElementById('billingGstDetail').textContent = billingGst;
+            document.getElementById('shippingNameDetail').textContent = shippingName;
+            document.getElementById('shippingAddressDetail').textContent = shippingAddress;
 
-            if (num > 0) {
-                wordsArray.push(words[num]);
-            }
-
-            return wordsArray.join(' ');
-        }
-
-        function generateRandomNumber() {
-            return Math.floor(Math.random() * 1000000000);
-        }
-
-        function getCurrentTimestamp() {
-            const now = new Date();
-            return now.toISOString().split('T')[0];
-        }
-
-        function renderInvoice() {
-            const params = getQueryParams();
-            const invoiceContainer = document.getElementById('invoice-container');
-            const invoiceNo = generateRandomNumber();
-            const orderNo = generateRandomNumber();
-            const invoiceDate = getCurrentTimestamp();
-            const orderDate = getCurrentTimestamp();
-
-            let totalAmount = 0;
-            let itemRows = '';
-            params.items.forEach((item, index) => {
-                totalAmount += parseFloat(item.totalAmount);
-                itemRows += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${item.itemDescription}</td>
-                        <td>₹${item.unitPrice}</td>
-                        <td>${item.quantity}</td>
-                        <td>₹${item.netAmount}</td>
-                        <td>₹${item.taxAmount}</td>
-                        <td>₹${item.totalAmount}</td>
-                    </tr>
+            // Fill the items in the table
+            const itemTableBody = document.getElementById('itemTableBody');
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.itemDescription}</td>
+                    <td>₹${item.unitPrice}</td>
+                    <td>${item.quantity}</td>
+                    <td>₹${item.itemNetAmount}</td>
+                    <td>₹${item.itemTaxAmount}</td>
+                    <td>₹${item.itemTotalAmount}</td>
                 `;
+                itemTableBody.appendChild(row);
             });
 
-            invoiceContainer.innerHTML = `
-                <div class="header">
-                    <img src="https://th.bing.com/th/id/OIP.xIn00af_rw54z7zhhXuOhwHaHa?w=205&h=205&c=7&r=0&o=5&dpr=1.5&pid=1.7" alt="Amazon Logo">
-                    <div class="title">
-                        <h1>Tax Invoice</h1>
-                        <p><strong>Invoice No:</strong> ${invoiceNo}</p>
-                        <p><strong>Order No:</strong> ${orderNo}</p>
-                        <p><strong>Invoice Date:</strong> ${invoiceDate}</p>
-                        <p><strong>Order Date:</strong> ${orderDate}</p>
-                    </div>
-                </div>
+            // Display net amount, tax, and total amounts
+            document.getElementById('netAmount').textContent = netAmount;
+            document.getElementById('cgst').textContent = cgst;
+            document.getElementById('sgst').textContent = sgst;
+            document.getElementById('igst').textContent = igst;
+            document.getElementById('totalTaxAmount').textContent = totalTaxAmount;
+            document.getElementById('totalAmount').textContent = totalAmount;
 
-                <div class="section">
-                    <h2>Seller Details</h2>
-                    <p><strong>${params.sellerName}</strong></p>
-                    <p>${params.sellerAddress}</p>
-                    <p>GST No: ${params.sellerGst}</p>
-                </div>
+            // Convert total amount to words dynamically
+            function convertToWords(num) {
+                const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+                const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
 
-                <div class="section">
-                    <h2>Billing Details</h2>
-                    <p><strong>${params.billingName}</strong></p>
-                    <p>${params.billingAddress}</p>
-                    <p>GST No: ${params.billingGst}</p>
-                </div>
+                if (isNaN(num) || num === '') return 'Invalid input';
 
-                <div class="section">
-                    <h2>Shipping Details</h2>
-                                        <p><strong>${params.billingName}</strong></p>
-                    <p>${params.billingAddress}</p>
-                    <p>GST No: ${params.billingGst}</p>
-                                    </div>
+                num = parseFloat(num).toFixed(2); // Ensure two decimal places for amounts
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Item Description</th>
-                            <th>Unit Price</th>
-                            <th>Quantity</th>
-                            <th>Net Amount</th>
-                            <th>Tax Amount</th>
-                            <th>Total Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${itemRows}
-                    </tbody>
-                </table>
+                // Split into integer and decimal parts
+                const [integerPart, decimalPart] = num.split('.');
 
-                <div class="footer">
-                    <p><strong>Total Amount (in words):</strong> ${numberToWords(totalAmount)} Only</p>
-                    <div class="signature">
-                        <p>Authorized Signature</p>
-                        <div class="signature-box"></div>
-                    </div>
-                </div>
-            `;
-        }
+                // Process the integer part as before
+                if (integerPart.length > 9) return 'Overflow';
 
-        renderInvoice();
+                const n = ('000000000' + integerPart).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{2})(\d{1})$/);
+                if (!n) return;
+
+                let str = '';
+                str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + ' Crore ' : '';
+                str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + ' Lakh ' : '';
+                str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + ' Thousand ' : '';
+                str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + ' Hundred ' : '';
+                str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+
+                // Add decimal part for paise (e.g., 50 paisa)
+                const paise = parseInt(decimalPart);
+                if (paise > 0) {
+                    str += ` and ${a[paise] || b[paise[0]] + ' ' + a[paise[1]]} Paise`;
+                }
+
+                return str + ' only';
+            }
+
+            document.getElementById('amountInWords').textContent = convertToWords(totalAmount);
+        };
     </script>
 </body>
 
